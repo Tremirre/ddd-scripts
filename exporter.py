@@ -65,6 +65,7 @@ def parse_polarity_body(body: np.ndarray, header: EventHeader) -> ParsedEvent:
     x = data >> 17
     polarity_frame = np.ones(IMAGE_SHAPE, dtype=np.uint8) * 127
     polarity_frame[y, x] = pol * 255
+    polarity_frame = polarity_frame[::-1, ::-1]
     return ParsedEvent(timestamp[0] * 1e-6, polarity_frame)
 
 
@@ -130,15 +131,26 @@ if __name__ == "__main__":
             event_aggregates[parsed_header.type]["timestamps"].append(event.timestamp)
             event_aggregates[parsed_header.type]["data"].append(event.data)
 
-    out_data = {}
     for etype, data in event_aggregates.items():
-        out_data[f"{etype.name.lower()}_timestamps"] = np.array(
+        logging.info(
+            f"Processed {len(data['timestamps'])} {etype.name.lower()} events."
+        )
+        event_aggregates[etype]["timestamps"] = np.array(
             data["timestamps"], dtype=np.float32
         )
-        del data["timestamps"]
-        out_data[f"{etype.name.lower()}_data"] = np.array(data["data"], dtype=np.uint8)
-        del data["data"]
+        event_aggregates[etype]["data"] = np.array(data["data"], dtype=np.uint8)
 
+    polarity_groups = np.searchsorted(
+        event_aggregates[EventType.FRAME]["timestamps"],
+        event_aggregates[EventType.POLARITY]["timestamps"],
+    )
+
+    out_data = {
+        "polarity_groups": polarity_groups,
+        "polarity_data": event_aggregates[EventType.POLARITY]["data"],
+        "frame_data": event_aggregates[EventType.FRAME]["data"],
+    }
+    del event_aggregates
     logging.info(f"Saving data to {config.output}")
     np.savez_compressed(config.output, **out_data)
     logging.info("DONE!")
