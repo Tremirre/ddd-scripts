@@ -17,8 +17,14 @@ URL_TEMPLATE = "https://drive.google.com/uc?id={}"
 OUT_FOLDER = pathlib.Path("videos")
 
 if __name__ == "__main__":
+
     OUT_FOLDER.mkdir(parents=True, exist_ok=True)
     TMP_DIR.mkdir(parents=True, exist_ok=True)
+    name_mapping_file = OUT_FOLDER / "names.json"
+    name_mapping = {}
+    if name_mapping_file.exists():
+        with open(name_mapping_file, "r") as f:
+            name_mapping = json.load(f)
 
     for file in TMP_DIR.glob("*"):
         file.unlink()
@@ -49,20 +55,23 @@ if __name__ == "__main__":
         )
         archive_file.unlink()
         extracted_file = list(TMP_DIR.glob("*.hdf5"))[0]
+        name_mapping[file_id] = extracted_file.stem
+        with open(name_mapping_file, "w") as f:
+            json.dump(name_mapping, f)
 
         logging.info("Starting export process".center(80, "="))
         subprocess.run(
             [
                 "python",
+                "-u",
                 "exporter.py",
                 "--input",
                 str(extracted_file),
                 "--output",
                 str(exported_file),
             ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             check=True,
+            text=True,
         )
 
         logging.info(f"Exported {file_id} to {exported_file}")
@@ -71,15 +80,15 @@ if __name__ == "__main__":
         subprocess.run(
             [
                 "python",
+                "-u",
                 "converter.py",
                 "--input",
                 str(exported_file),
                 "--output",
                 str(output_file),
             ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             check=True,
+            text=True,
         )
         logging.info(f"Converted {file_id} to videos/{file_id}.mp4")
         exported_file.unlink()
