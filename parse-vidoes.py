@@ -32,7 +32,6 @@ if __name__ == "__main__":
     ids_path = sys.argv[1]
     with open(ids_path, "r") as f:
         ids = json.load(f)
-
     logging.info(f"Loaded {len(ids)} ids from {ids_path}")
 
     for file_id in ids:
