@@ -145,8 +145,10 @@ if __name__ == "__main__":
         event_aggregates[EventType.POLARITY]["timestamps"],
     )
 
+    max_groups = polarity_groups.max()
+    assert max_groups < 2**16, "Too many groups for uint16."
     out_data = {
-        "polarity_groups": polarity_groups,
+        "polarity_groups": polarity_groups.astype(np.uint16),
         "polarity_data": event_aggregates[EventType.POLARITY]["data"],
         "frame_data": event_aggregates[EventType.FRAME]["data"],
     }
