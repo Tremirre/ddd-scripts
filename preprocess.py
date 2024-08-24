@@ -20,6 +20,7 @@ OFFSET_H = (S_H - T_H) // 2
 OFFSET_W = (S_W - T_W) // 2
 
 CHUNK_SIZE = 8192
+BATCH_SIZE = 128
 
 
 if __name__ == "__main__":
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output",
         type=pathlib.Path,
-        help="Path to the output file",
+        help="Path to the output directory",
     )
     parser.add_argument(
         "--debug",
@@ -47,18 +48,27 @@ if __name__ == "__main__":
         help="Enable debug logging",
         default=False,
     )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=BATCH_SIZE,
+    )
 
     args = parser.parse_args()
     input_file = args.input
-    output_file = args.output
+    output_dir = args.output
     n_bins = args.num_bins
+    b_size = args.batch_size
+
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True)
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
         logging.debug("Debug logging enabled.")
 
     logging.debug(f"Input file: {input_file}")
-    logging.debug(f"Output file: {output_file}")
+    logging.debug(f"Output dir: {output_dir}")
     logging.debug(f"Number of bins: {n_bins}")
     logging.debug(f"Chunk size: {CHUNK_SIZE}")
 
@@ -132,11 +142,14 @@ if __name__ == "__main__":
         del polarities
         del frames
 
-    out_data = {
-        "frame_data": trimmed_frames,
-        "polarity_data": voxelled_polarities,
-    }
+    n_batches, rem_batches = divmod(num_frames, b_size)
+    n_batches += bool(rem_batches)
 
-    logging.info(f"Saving data to {output_file}...")
-    np.savez(output_file, **out_data)
-    logging.info("Done.")
+    logging.info(f"Saving data to {output_dir} in {n_batches} batches...")
+    for i in tqdm.tqdm(range(0, len(voxelled_polarities), b_size)):
+        np.savez(
+            output_dir / f"{input_file.stem}_{i // b_size:>04}.npz",
+            frame_data=trimmed_frames[i : i + b_size],
+            polarity_data=voxelled_polarities[i : i + b_size],
+        )
+    logging.info("Data saved successfully.")
