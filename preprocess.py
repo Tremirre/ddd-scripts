@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--num-bins",
         type=int,
-        default=4,
+        default=6,
         help="Number of bins to use for the voxelization",
     )
     parser.add_argument(

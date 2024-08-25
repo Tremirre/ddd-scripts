@@ -14,24 +14,40 @@ logging.basicConfig(
 
 TMP_DIR = pathlib.Path("~/AppData/Local/Temp/ddd/out/").expanduser()
 URL_TEMPLATE = "https://drive.google.com/uc?id={}"
-OUT_FOLDER = pathlib.Path("videos")
+VID_OUT_FOLDER = pathlib.Path("videos")
+PREPROCESSED_OUT_FOLDER = pathlib.Path("../out/")
+NAME_MAPPING_FILE = "names.json"
+
 
 if __name__ == "__main__":
-
-    OUT_FOLDER.mkdir(parents=True, exist_ok=True)
+    VID_OUT_FOLDER.mkdir(parents=True, exist_ok=True)
     TMP_DIR.mkdir(parents=True, exist_ok=True)
-    name_mapping_file = OUT_FOLDER / "names.json"
-    name_mapping = {}
-    if name_mapping_file.exists():
-        with open(name_mapping_file, "r") as f:
-            name_mapping = json.load(f)
 
     for file in TMP_DIR.glob("*"):
         file.unlink()
 
+    if len(sys.argv) < 2:
+        logging.error("Please provide a path to the ids file")
+        sys.exit(1)
+
     ids_path = sys.argv[1]
+    preprocess_flag = bool(sys.argv[2]) if len(sys.argv) > 2 else False
+    logging.info(
+        f"Script run in {'video extraction' if not preprocess_flag else 'preprocessing'} mode"
+    )
+
+    name_mapping_file = (
+        VID_OUT_FOLDER if not preprocess_flag else PREPROCESSED_OUT_FOLDER
+    ) / "names.json"
+    name_mapping = {}
+
+    if name_mapping_file.exists():
+        with open(name_mapping_file, "r") as f:
+            name_mapping = json.load(f)
+
     with open(ids_path, "r") as f:
         ids = json.load(f)
+
     logging.info(f"Loaded {len(ids)} ids from {ids_path}")
 
     for file_id in ids:
@@ -39,9 +55,9 @@ if __name__ == "__main__":
 
         archive_file = TMP_DIR / f"{file_id}.7z"
         exported_file = TMP_DIR / f"{file_id}.npz"
-        output_file = OUT_FOLDER / f"{file_id}.mp4"
+        output_file = VID_OUT_FOLDER / f"{file_id}.mp4"
 
-        if output_file.exists():
+        if output_file.exists() and not preprocess_flag:
             logging.info(f"Skipping {file_id} - already exists")
             continue
 
@@ -75,21 +91,38 @@ if __name__ == "__main__":
 
         logging.info(f"Exported {file_id} to {exported_file}")
         extracted_file.unlink()
-        logging.info("Starting conversion process".center(80, "="))
-        subprocess.run(
-            [
-                "python",
-                "-u",
-                "converter.py",
-                "--input",
-                str(exported_file),
-                "--output",
-                str(output_file),
-            ],
-            check=True,
-            text=True,
-        )
-        logging.info(f"Converted {file_id} to videos/{file_id}.mp4")
+        if preprocess_flag:
+            logging.info("Starting preprocessing".center(80, "="))
+            subprocess.run(
+                [
+                    "python",
+                    "-u",
+                    "preprocess.py",
+                    "--input",
+                    str(exported_file),
+                    "--output",
+                    str(PREPROCESSED_OUT_FOLDER),
+                ],
+                check=True,
+                text=True,
+            )
+            logging.info(f"Preprocessed {file_id}")
+        else:
+            logging.info("Starting conversion process".center(80, "="))
+            subprocess.run(
+                [
+                    "python",
+                    "-u",
+                    "converter.py",
+                    "--input",
+                    str(exported_file),
+                    "--output",
+                    str(output_file),
+                ],
+                check=True,
+                text=True,
+            )
+            logging.info(f"Converted {file_id} to videos/{file_id}.mp4")
         exported_file.unlink()
 
     logging.info("Done".center(80, "="))
