@@ -22,6 +22,11 @@ NAME_MAPPING_FILE = "names.json"
 if __name__ == "__main__":
     VID_OUT_FOLDER.mkdir(parents=True, exist_ok=True)
     TMP_DIR.mkdir(parents=True, exist_ok=True)
+    py_interpreter_path = pathlib.Path("../.venv/Scripts/python.exe")
+    py_interpreter = str(py_interpreter_path.resolve())
+    if not py_interpreter_path.exists():
+        logging.info("No virtual environment found, using system python")
+        py_interpreter = "python"
 
     for file in TMP_DIR.glob("*"):
         file.unlink()
@@ -57,7 +62,7 @@ if __name__ == "__main__":
         exported_file = TMP_DIR / f"{file_id}.npz"
         output_file = VID_OUT_FOLDER / f"{file_id}.mp4"
 
-        if output_file.exists() and not preprocess_flag:
+        if output_file.exists() or name_mapping.get(file_id):
             logging.info(f"Skipping {file_id} - already exists")
             continue
 
@@ -77,7 +82,7 @@ if __name__ == "__main__":
         logging.info("Starting export process".center(80, "="))
         subprocess.run(
             [
-                "python",
+                py_interpreter,
                 "-u",
                 "exporter.py",
                 "--input",
@@ -95,7 +100,7 @@ if __name__ == "__main__":
             logging.info("Starting preprocessing".center(80, "="))
             subprocess.run(
                 [
-                    "python",
+                    py_interpreter,
                     "-u",
                     "preprocess.py",
                     "--input",
@@ -111,7 +116,7 @@ if __name__ == "__main__":
             logging.info("Starting conversion process".center(80, "="))
             subprocess.run(
                 [
-                    "python",
+                    py_interpreter,
                     "-u",
                     "converter.py",
                     "--input",

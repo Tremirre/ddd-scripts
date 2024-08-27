@@ -92,7 +92,7 @@ if __name__ == "__main__":
         arr_offset = 0
         for i, polarities in enumerate(polarities_iter):
             polarities = polarities[
-                :, OFFSET_H : OFFSET_H + T_H, OFFSET_W : OFFSET_W + T_W
+                :, OFFSET_H : S_H - OFFSET_H, OFFSET_W : S_W - OFFSET_W
             ].astype(np.float16)
             polarities = (polarities - 127.5) / 127.5
             groups = polarity_groups[arr_offset : arr_offset + len(polarities)]
@@ -136,7 +136,7 @@ if __name__ == "__main__":
             right = left + len(frames)
             logging.debug(f"Frames: {left} - {right}")
             trimmed_frames[left:right] = frames[
-                :, OFFSET_H : OFFSET_H + T_H, OFFSET_W : OFFSET_W + T_W
+                :, OFFSET_H : S_H - OFFSET_H, OFFSET_W : S_W - OFFSET_W
             ]
         logging.debug("Cleaning up memmapped arrays")
         del polarities
