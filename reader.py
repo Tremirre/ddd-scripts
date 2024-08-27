@@ -31,13 +31,20 @@ class NumpyMemmapIterator:
         if len(self.full_shape) > 1:
             chunk_shape = (chunk_size, *self.full_shape[1:])
         logging.debug(f"Reading chunk with shape {chunk_shape}")
-        chunk_array = np.memmap(
+        # chunk_array = np.memmap(
+        #     self.array_file,
+        #     dtype=self.dtype,
+        #     mode="c",
+        #     shape=chunk_shape,
+        #     offset=self.offset,
+        # )
+        chunk_array = np.lib.format.open_memmap(
             self.array_file,
             dtype=self.dtype,
             mode="c",
-            shape=chunk_shape,
-            offset=self.offset,
+            shape=self.full_shape,
         )
+        chunk_array = chunk_array[self.offset : self.offset + chunk_size]
         self.offset += chunk_size
         return chunk_array
 
