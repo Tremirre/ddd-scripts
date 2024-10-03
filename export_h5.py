@@ -7,10 +7,10 @@ import logging
 import pathlib
 import struct
 
+import h5py
+import numpy as np
 import tqdm
 import tqdm.contrib.logging
-import numpy as np
-import h5py
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -106,14 +106,14 @@ if __name__ == "__main__":
         logging.error(f"Failed to open {config.input} - exiting.")
         exit(1)
     logging.info(f"Opened {config.input} successfully.")
-    dvs_data = source["dvs"]["data"]
+    dvs_data = source["dvs"]["data"]  # type: ignore
 
     event_aggregates = {
         EventType.FRAME: {"timestamps": [], "data": []},
         EventType.POLARITY: {"timestamps": [], "data": []},
     }
-    total_events = len(dvs_data)
-    for i, event in tqdm.tqdm(enumerate(dvs_data), total=total_events):
+    total_events = len(dvs_data)  # type: ignore
+    for i, event in tqdm.tqdm(enumerate(dvs_data), total=total_events):  # type: ignore
         with tqdm.contrib.logging.logging_redirect_tqdm():
             sys_ts, header, body = event
             try:
@@ -135,10 +135,10 @@ if __name__ == "__main__":
         logging.info(
             f"Processed {len(data['timestamps'])} {etype.name.lower()} events."
         )
-        event_aggregates[etype]["timestamps"] = np.array(
+        event_aggregates[etype]["timestamps"] = np.array(  # type: ignore
             data["timestamps"], dtype=np.float32
         )
-        event_aggregates[etype]["data"] = np.array(data["data"], dtype=np.uint8)
+        event_aggregates[etype]["data"] = np.array(data["data"], dtype=np.uint8)  # type: ignore
 
     polarity_groups = np.searchsorted(
         event_aggregates[EventType.FRAME]["timestamps"],

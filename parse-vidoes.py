@@ -1,12 +1,11 @@
 import json
-import sys
 import logging
 import pathlib
-import gdown
 import subprocess
+import sys
 
+import gdown
 import patoolib
-
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -84,7 +83,7 @@ if __name__ == "__main__":
             [
                 py_interpreter,
                 "-u",
-                "exporter.py",
+                "export_h5.py",
                 "--input",
                 str(extracted_file),
                 "--output",
@@ -102,7 +101,7 @@ if __name__ == "__main__":
                 [
                     py_interpreter,
                     "-u",
-                    "preprocess.py",
+                    "voxelize_and_batch.py",
                     "--input",
                     str(exported_file),
                     "--output",
@@ -118,7 +117,7 @@ if __name__ == "__main__":
                 [
                     py_interpreter,
                     "-u",
-                    "converter.py",
+                    "convert_to_video.py",
                     "--input",
                     str(exported_file),
                     "--output",
