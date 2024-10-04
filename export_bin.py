@@ -6,8 +6,6 @@ import logging
 import pathlib
 import cv2  # type: ignore
 import numpy as np  # type: ignore
-import tqdm  # type: ignore
-import tqdm.contrib.logging  # type: ignore
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -51,28 +49,36 @@ if __name__ == "__main__":
     if not config.input_vid.exists():
         raise FileNotFoundError(f"File {config.input_vid} not found - exiting")
 
+    logging.info(f"Loading events from {config.input_bin}")
     with open(config.input_bin, "rb") as f:
         height, width, count = np.fromfile(f, dtype=np.uint32, count=3)
         polarity_data: np.ndarray = np.fromfile(
             f, dtype=np.uint8, count=height * width * count
         ).reshape((count, height, width))
         polarity_timestmaps: np.ndarray = np.fromfile(f, dtype=np.float32, count=count)
+    logging.info(f"Loaded {count} events")
 
     polarity_timestmaps -= polarity_timestmaps[0]
-    cap = cv2.VideoCapture(str(config.input_vid))
     timestamps = []
     frames = []
-    while cap.isOpened():
+    logging.info(f"Loading frames from {config.input_vid}")
+    cap = cv2.VideoCapture(str(config.input_vid))
+    while True:
         ret, frame = cap.read()
+        if not ret:
+            break
         ts = cap.get(cv2.CAP_PROP_POS_MSEC)
         timestamps.append(ts)
         frames.append(frame)
+        if len(frames) % 100 == 0:
+            logging.info(f"Processed {len(frames)} frames")
+
+    logging.info(f"Loaded {len(frames)} frames in total")
 
     frames = np.array(frames)
     timestamps = np.array(timestamps)
 
-    assert timestamps.shape[0] == polarity_timestmaps.shape[0]  # type: ignore
-
+    logging.info("Searching groups")
     polarity_groups = np.searchsorted(timestamps, polarity_timestmaps)  # type: ignore
     max_groups = polarity_groups.max()
     assert max_groups < 2**16, "Too many groups for uint16"
