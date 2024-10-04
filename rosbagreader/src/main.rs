@@ -79,8 +79,8 @@ fn events_to_buffer(
     frame_index: usize,
 ) {
     for event in events {
-        let x = event.x as usize;
-        let y = event.y as usize;
+        let x = (WIDTH as u16 - event.x) as usize;
+        let y = (HEIGHT as u16 - event.y) as usize;
         let polarity = if event.polarity { 255 } else { 0 };
         let index = y * width as usize + x;
         frame_buffer[frame_index * width as usize * height as usize + index] = polarity;

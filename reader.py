@@ -1,7 +1,6 @@
 import logging
-import typing
-import zipfile
 import tempfile
+import zipfile
 
 import numpy as np
 
@@ -73,7 +72,6 @@ class ZipNumpyReader:
     def get_iterator(
         self, arr_name: str, chunk_size: int, dtype: type | None = None
     ) -> NumpyMemmapIterator:
-
         return NumpyMemmapIterator(
             f"{self.tmp_dir.name}\\{arr_name}.npy",
             chunk_size,
