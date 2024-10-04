@@ -4,6 +4,7 @@ import argparse
 import dataclasses
 import logging
 import pathlib
+
 import cv2  # type: ignore
 import numpy as np  # type: ignore
 
@@ -59,6 +60,8 @@ if __name__ == "__main__":
     logging.info(f"Loaded {count} events")
 
     polarity_timestmaps -= polarity_timestmaps[0]
+    polarity_timestmaps *= 1000
+    polarity_timestmaps[-1] = polarity_timestmaps[-2]
     timestamps = []
     frames = []
     logging.info(f"Loading frames from {config.input_vid}")
